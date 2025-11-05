@@ -1,0 +1,65 @@
+name: "Test & Release"
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - "main"
+      - "dev"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-arm64
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+            fetch-tags: true
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Test & Format
+        run: |
+          gofmt -s -w .
+          go test
+          
+      - name: Build
+        run: |
+          go build
+          rm covpeek
+
+      - name: Lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+          golangci-lint run
+
+  release:
+    runs-on: ubuntu-arm64
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+            fetch-tags: true
+
+      - name: Tag
+        run: |
+          git tag "$(svu next --force-patch-increment)"
+          git push --tags
+
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEATOKEN }}

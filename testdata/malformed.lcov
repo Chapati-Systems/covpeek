@@ -1,0 +1,10 @@
+TN:test_with_errors
+SF:file.rs
+DA:5,10
+DA:invalid_line_here
+DA:7,5
+FN:not_enough_fields
+FNDA:broken,data
+LH:2
+LF:3
+end_of_record
