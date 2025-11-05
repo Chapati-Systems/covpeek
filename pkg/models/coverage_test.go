@@ -181,6 +181,112 @@ func TestCoverageReportWithMultipleFiles(t *testing.T) {
 	}
 }
 
+func TestCalculateOverallCoverage(t *testing.T) {
+	tests := []struct {
+		name                 string
+		files                []*FileCoverage
+		expectedTotalLines   int
+		expectedTotalCovered int
+		expectedOverallPct   float64
+	}{
+		{
+			name: "Multiple files with mixed coverage",
+			files: []*FileCoverage{
+				{FileName: "file1.go", TotalLines: 100, CoveredLines: 90},
+				{FileName: "file2.go", TotalLines: 50, CoveredLines: 40},
+				{FileName: "file3.go", TotalLines: 75, CoveredLines: 60},
+			},
+			expectedTotalLines:   225,
+			expectedTotalCovered: 190,
+			expectedOverallPct:   (190.0 / 225.0) * 100.0, // ~84.44%
+		},
+		{
+			name: "Single file",
+			files: []*FileCoverage{
+				{FileName: "single.go", TotalLines: 200, CoveredLines: 150},
+			},
+			expectedTotalLines:   200,
+			expectedTotalCovered: 150,
+			expectedOverallPct:   75.0,
+		},
+		{
+			name:                 "Empty report",
+			files:                []*FileCoverage{},
+			expectedTotalLines:   0,
+			expectedTotalCovered: 0,
+			expectedOverallPct:   0.0,
+		},
+		{
+			name: "Files with zero total lines",
+			files: []*FileCoverage{
+				{FileName: "empty1.go", TotalLines: 0, CoveredLines: 0},
+				{FileName: "empty2.go", TotalLines: 0, CoveredLines: 0},
+			},
+			expectedTotalLines:   0,
+			expectedTotalCovered: 0,
+			expectedOverallPct:   0.0,
+		},
+		{
+			name: "Mixed files including zero lines",
+			files: []*FileCoverage{
+				{FileName: "normal.go", TotalLines: 100, CoveredLines: 80},
+				{FileName: "empty.go", TotalLines: 0, CoveredLines: 0},
+			},
+			expectedTotalLines:   100,
+			expectedTotalCovered: 80,
+			expectedOverallPct:   80.0,
+		},
+		{
+			name: "All lines covered",
+			files: []*FileCoverage{
+				{FileName: "perfect1.go", TotalLines: 50, CoveredLines: 50},
+				{FileName: "perfect2.go", TotalLines: 30, CoveredLines: 30},
+			},
+			expectedTotalLines:   80,
+			expectedTotalCovered: 80,
+			expectedOverallPct:   100.0,
+		},
+		{
+			name: "No lines covered",
+			files: []*FileCoverage{
+				{FileName: "uncovered1.go", TotalLines: 40, CoveredLines: 0},
+				{FileName: "uncovered2.go", TotalLines: 60, CoveredLines: 0},
+			},
+			expectedTotalLines:   100,
+			expectedTotalCovered: 0,
+			expectedOverallPct:   0.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			report := NewCoverageReport()
+			for _, fc := range tt.files {
+				report.AddFile(fc)
+			}
+
+			totalLines, totalCovered, overallPct := report.CalculateOverallCoverage()
+
+			if totalLines != tt.expectedTotalLines {
+				t.Errorf("Expected total lines %d, got %d", tt.expectedTotalLines, totalLines)
+			}
+
+			if totalCovered != tt.expectedTotalCovered {
+				t.Errorf("Expected total covered %d, got %d", tt.expectedTotalCovered, totalCovered)
+			}
+
+			// Use approximate comparison for floating point
+			diff := overallPct - tt.expectedOverallPct
+			if diff < 0 {
+				diff = -diff
+			}
+			if diff > 0.0001 {
+				t.Errorf("Expected overall coverage %.4f%%, got %.4f%%", tt.expectedOverallPct, overallPct)
+			}
+		})
+	}
+}
+
 func TestFileCoverageWithFunctions(t *testing.T) {
 	fc := &FileCoverage{
 		FileName:     "utils.go",

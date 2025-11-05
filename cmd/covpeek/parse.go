@@ -66,7 +66,7 @@ func validateFlags(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("cannot read file %s: %w", coverageFile, err)
 	}
-	file.Close()
+	_ = file.Close()
 
 	// Validate format if specified
 	if forceFormat != "" {
@@ -115,7 +115,7 @@ func runParse(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open coverage file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Read file content into memory for detection and parsing
 	content, err := io.ReadAll(file)
@@ -219,12 +219,7 @@ func outputTable(report *models.CoverageReport) error {
 	}
 
 	// Calculate overall coverage
-	totalLines := 0
-	totalCovered := 0
-	for _, fileCov := range report.Files {
-		totalLines += fileCov.TotalLines
-		totalCovered += fileCov.CoveredLines
-	}
+	totalLines, totalCovered, overallPct := report.CalculateOverallCoverage()
 
 	// Sort files by name for consistent output
 	filenames := make([]string, 0, len(report.Files))
@@ -257,10 +252,6 @@ func outputTable(report *models.CoverageReport) error {
 
 	// Print summary
 	fmt.Println("├────────────────────────────────────────────────────────────────────────────┤")
-	overallPct := 0.0
-	if totalLines > 0 {
-		overallPct = (float64(totalCovered) / float64(totalLines)) * 100.0
-	}
 	fmt.Printf("│ %-50s │ %9.2f%% │ %4d/%4d │\n",
 		"OVERALL",
 		overallPct,

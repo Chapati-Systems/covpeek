@@ -47,6 +47,18 @@ func (r *CoverageReport) GetFile(filename string) *FileCoverage {
 	return r.Files[filename]
 }
 
+// CalculateOverallCoverage calculates the total lines, covered lines, and overall coverage percentage across all files
+func (r *CoverageReport) CalculateOverallCoverage() (totalLines int, totalCovered int, overallPct float64) {
+	for _, fc := range r.Files {
+		totalLines += fc.TotalLines
+		totalCovered += fc.CoveredLines
+	}
+	if totalLines > 0 {
+		overallPct = (float64(totalCovered) / float64(totalLines)) * 100.0
+	}
+	return
+}
+
 // CalculateCoverage calculates the coverage percentage for a file
 func (fc *FileCoverage) CalculateCoverage() {
 	if fc.TotalLines > 0 {

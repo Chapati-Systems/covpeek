@@ -57,7 +57,7 @@ It supports LCOV format (.lcov, .info) and Go coverage format (.out).`,
 	testCmd.Flags().StringVar(&testForceFormat, "format", "", "Override format detection (rust, go, ts)")
 	testCmd.Flags().Float64Var(&testBelowPct, "below", 0, "Coverage threshold filter (0-100)")
 	testCmd.Flags().StringVarP(&testOutputFormat, "output", "o", "table", "Output format (table, json, csv)")
-	testCmd.MarkFlagRequired("file")
+	_ = testCmd.MarkFlagRequired("file")
 
 	return testCmd
 }
@@ -84,7 +84,7 @@ func validateTestFlags(coverageFile, forceFormat string, belowPct float64, outpu
 	if err != nil {
 		return fmt.Errorf("cannot read file %s: %w", coverageFile, err)
 	}
-	file.Close()
+	_ = file.Close()
 
 	if forceFormat != "" {
 		validFormats := map[string]bool{
@@ -134,7 +134,7 @@ func TestNonExistentFile(t *testing.T) {
 func TestInvalidBelowValue(t *testing.T) {
 	// Create temp file
 	tmpFile := createTempCoverageFile(t)
-	defer os.Remove(tmpFile)
+	defer func() { _ = os.Remove(tmpFile) }()
 
 	testCases := []struct {
 		name  string
@@ -167,7 +167,7 @@ func TestInvalidBelowValue(t *testing.T) {
 
 func TestInvalidFormatValue(t *testing.T) {
 	tmpFile := createTempCoverageFile(t)
-	defer os.Remove(tmpFile)
+	defer func() { _ = os.Remove(tmpFile) }()
 
 	cmd := createTestCommand()
 	cmd.SetArgs([]string{"--file", tmpFile, "--format", "invalid"})
@@ -187,7 +187,7 @@ func TestInvalidFormatValue(t *testing.T) {
 
 func TestInvalidOutputValue(t *testing.T) {
 	tmpFile := createTempCoverageFile(t)
-	defer os.Remove(tmpFile)
+	defer func() { _ = os.Remove(tmpFile) }()
 
 	cmd := createTestCommand()
 	cmd.SetArgs([]string{"--file", tmpFile, "--output", "xml"})
@@ -211,7 +211,7 @@ func TestDirectoryAsFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	cmd := createTestCommand()
 	cmd.SetArgs([]string{"--file", tmpDir})
@@ -231,7 +231,7 @@ func TestDirectoryAsFile(t *testing.T) {
 
 func TestValidFlagsAccepted(t *testing.T) {
 	tmpFile := createTempCoverageFile(t)
-	defer os.Remove(tmpFile)
+	defer func() { _ = os.Remove(tmpFile) }()
 
 	testCases := []struct {
 		name string
@@ -287,7 +287,7 @@ end_of_record
 		t.Fatalf("Failed to write temp file: %v", err)
 	}
 
-	tmpFile.Close()
+	_ = tmpFile.Close()
 	return tmpFile.Name()
 }
 
@@ -301,14 +301,14 @@ func TestFilePermissionError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
-	tmpFile.Close()
-	defer os.Remove(tmpFile.Name())
+	_ = tmpFile.Close()
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
 
 	// Remove all permissions
 	if err := os.Chmod(tmpFile.Name(), 0000); err != nil {
 		t.Fatalf("Failed to change file permissions: %v", err)
 	}
-	defer os.Chmod(tmpFile.Name(), 0644) // Restore for cleanup
+	defer func() { _ = os.Chmod(tmpFile.Name(), 0644) }() // Restore for cleanup
 
 	cmd := createTestCommand()
 	cmd.SetArgs([]string{"--file", tmpFile.Name()})
