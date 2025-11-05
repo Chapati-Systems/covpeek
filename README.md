@@ -39,25 +39,33 @@ Then the package can be installed:
 
 ### Parse a Coverage File
 
-Parse a coverage file and display summary:
+Parse a coverage file and display summary table:
 
-    covpeek parse --file coverage.lcov
+    covpeek --file coverage.lcov
 
 Parse with different output formats:
 
-    # Summary format (default)
-    covpeek parse --file coverage.lcov --format summary
-    
-    # Detailed format with line-by-line coverage
-    covpeek parse --file coverage.out --format detailed
+    # Table format (default) - sorted by coverage descending
+    covpeek --file coverage.lcov --output table
     
     # JSON format for programmatic use
-    covpeek parse --file lcov.info --format json
+    covpeek --file lcov.info --output json
+    
+    # CSV format for spreadsheet import
+    covpeek --file coverage.out --output csv
+
+Launch interactive TUI for exploring coverage data:
+
+    covpeek --file coverage.lcov --tui
 
 Force a specific format (bypass auto-detection):
 
-    covpeek parse --file coverage.txt --force-format lcov
-    covpeek parse --file coverage.dat --force-format go
+    covpeek --file coverage.txt --force-format lcov
+    covpeek --file coverage.dat --force-format go
+
+Filter files below coverage threshold:
+
+    covpeek --file coverage.lcov --below 80
 
 ### Examples
 

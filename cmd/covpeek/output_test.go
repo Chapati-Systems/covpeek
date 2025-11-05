@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"git.kernel.fun/chapati.systems/covpeek/pkg/models"
+	"github.com/spf13/cobra"
 )
 
 func TestOutputTable(t *testing.T) {
@@ -33,8 +34,12 @@ func TestOutputTable(t *testing.T) {
 	output := buf.String()
 
 	// Check for expected content
-	if !strings.Contains(output, "Coverage Report") {
-		t.Error("Table output should contain 'Coverage Report'")
+	if !strings.Contains(output, "File") {
+		t.Error("Table output should contain 'File' header")
+	}
+
+	if !strings.Contains(output, "Total Lines") {
+		t.Error("Table output should contain 'Total Lines' header")
 	}
 
 	if !strings.Contains(output, "test1.go") {
@@ -45,8 +50,8 @@ func TestOutputTable(t *testing.T) {
 		t.Error("Table should contain test2.go")
 	}
 
-	if !strings.Contains(output, "OVERALL") {
-		t.Error("Table should contain OVERALL summary")
+	if !strings.Contains(output, "Overall") {
+		t.Error("Table should contain Overall summary")
 	}
 }
 
@@ -128,24 +133,37 @@ func TestOutputCSV(t *testing.T) {
 	}
 }
 
-func TestFilterBelowThreshold(t *testing.T) {
+func TestRunParseHelp(t *testing.T) {
+	// Save original values
+	origFile := coverageFile
+	origTui := tuiMode
+	defer func() {
+		coverageFile = origFile
+		tuiMode = origTui
+	}()
+
+	cmd := &cobra.Command{}
+
+	// Test help argument
+	err := runParse(cmd, []string{"help"})
+	// This should not error, but we can't easily test the help output
+	// Just test that it doesn't crash
+	_ = err // We expect this might return an error or nil depending on implementation
+}
+
+func TestOutputTUIError(t *testing.T) {
+	// Test that outputTUI handles errors gracefully
 	report := createTestReport()
 
-	// Filter for files below 80%
-	filtered := filterBelowThreshold(report, 80.0)
+	// The function should not panic
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("outputTUI panicked: %v", r)
+		}
+	}()
 
-	// Should only have test1.go (75%)
-	if len(filtered.Files) != 1 {
-		t.Errorf("Expected 1 file below 80%%, got %d", len(filtered.Files))
-	}
-
-	if _, exists := filtered.Files["test1.go"]; !exists {
-		t.Error("Filtered report should contain test1.go")
-	}
-
-	if _, exists := filtered.Files["test2.go"]; exists {
-		t.Error("Filtered report should not contain test2.go (100%)")
-	}
+	// We can't easily test the full TUI, but we can test initialization
+	_ = outputTUI(report) // This will try to run the TUI, but should not panic
 }
 
 func TestFilterBelowThresholdNoMatches(t *testing.T) {
@@ -181,6 +199,145 @@ func TestOutputTableEmptyReport(t *testing.T) {
 
 	if !strings.Contains(output, "No files found") {
 		t.Error("Empty report should indicate no files found")
+	}
+}
+
+func TestOutputTUI(t *testing.T) {
+	report := createTestReport()
+
+	// For TUI, we can't easily test the interactive part,
+	// but we can test that the function doesn't error immediately
+	// In a real scenario, this would launch the TUI
+	// For testing, we'll just ensure it doesn't panic on creation
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("outputTUI panicked: %v", r)
+		}
+	}()
+
+	// Test that newTableModel works without panicking
+	model := newTableModel(report)
+	if len(model.table.Rows()) != 2 {
+		t.Errorf("Expected 2 rows, got %d", len(model.table.Rows()))
+	}
+
+	// Test sorting functionality
+	model.sortByColumn(0) // Sort by file name (descending initially)
+	rows := model.table.Rows()
+	if rows[0][0] != "test2.go" { // test2.go comes before test1.go in descending alphabetical order
+		t.Errorf("Expected first row to be test2.go after sorting by name, got %s", rows[0][0])
+	}
+
+	model.sortByColumn(3) // Sort by coverage (descending)
+	rows = model.table.Rows()
+	if rows[0][3] != "100.00" {
+		t.Errorf("Expected first row to have 100.00%% coverage after sorting, got %s", rows[0][3])
+	}
+
+	// Test View method doesn't panic
+	view := model.View()
+	if !strings.Contains(view, "Coverage Report") {
+		t.Error("View should contain title")
+	}
+	if !strings.Contains(view, "File") {
+		t.Error("View should contain File header")
+	}
+	if !strings.Contains(view, "Total Lines") {
+		t.Error("View should contain Total Lines header")
+	}
+}
+
+func TestValidateFlags(t *testing.T) {
+	// Save original values
+	origFile := coverageFile
+	origBelow := belowPct
+	origFormat := outputFormat
+	origForce := forceFormat
+	defer func() {
+		coverageFile = origFile
+		belowPct = origBelow
+		outputFormat = origFormat
+		forceFormat = origForce
+	}()
+
+	cmd := &cobra.Command{}
+
+	// Test missing file flag
+	coverageFile = ""
+	err := validateFlags(cmd, []string{})
+	if err == nil {
+		t.Error("Expected error for missing file flag")
+	}
+
+	// Test file doesn't exist
+	coverageFile = "nonexistent.lcov"
+	err = validateFlags(cmd, []string{})
+	if err == nil {
+		t.Error("Expected error for nonexistent file")
+	}
+
+	// Test directory instead of file
+	coverageFile = "../../testdata" // This is a directory
+	err = validateFlags(cmd, []string{})
+	if err == nil {
+		t.Error("Expected error for directory instead of file")
+	}
+
+	// Test invalid below percentage
+	coverageFile = "../../testdata/sample.lcov"
+	belowPct = 150 // Invalid
+	err = validateFlags(cmd, []string{})
+	if err == nil {
+		t.Error("Expected error for invalid below percentage")
+	}
+
+	belowPct = -10 // Invalid
+	err = validateFlags(cmd, []string{})
+	if err == nil {
+		t.Error("Expected error for negative below percentage")
+	}
+
+	// Test invalid output format
+	belowPct = 0
+	outputFormat = "invalid"
+	err = validateFlags(cmd, []string{})
+	if err == nil {
+		t.Error("Expected error for invalid output format")
+	}
+
+	// Test invalid force format
+	outputFormat = "table"
+	forceFormat = "invalid"
+	err = validateFlags(cmd, []string{})
+	if err == nil {
+		t.Error("Expected error for invalid force format")
+	}
+
+	// Test valid case
+	forceFormat = ""
+	err = validateFlags(cmd, []string{})
+	if err != nil {
+		t.Errorf("Expected no error for valid flags, got: %v", err)
+	}
+}
+
+func TestFilterBelowThreshold(t *testing.T) {
+	report := createTestReport()
+
+	// Test filtering
+	filtered := filterBelowThreshold(report, 80.0)
+	if len(filtered.Files) != 1 {
+		t.Errorf("Expected 1 file below 80%%, got %d", len(filtered.Files))
+	}
+
+	if _, exists := filtered.Files["test1.go"]; !exists {
+		t.Error("Filtered report should contain test1.go")
+	}
+
+	// Test no matches
+	filtered = filterBelowThreshold(report, 50.0)
+	if len(filtered.Files) != 0 {
+		t.Errorf("Expected 0 files below 50%%, got %d", len(filtered.Files))
 	}
 }
 

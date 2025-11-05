@@ -2,17 +2,15 @@ package main
 
 import (
 	"bytes"
-	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"sort"
 	"strings"
 
 	"git.kernel.fun/chapati.systems/covpeek/internal/detector"
 	"git.kernel.fun/chapati.systems/covpeek/pkg/models"
 	"git.kernel.fun/chapati.systems/covpeek/pkg/parser"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
 
@@ -29,14 +27,16 @@ var (
 	outputFormat string
 	forceFormat  string
 	belowPct     float64
+	tuiMode      bool
 )
 
 func init() {
 	// Define flags on root command
 	rootCmd.Flags().StringVarP(&coverageFile, "file", "f", "", "Path to coverage file (required)")
 	rootCmd.Flags().StringVar(&forceFormat, "format", "", "Override format detection (rust, go, ts)")
-	rootCmd.Flags().Float64Var(&belowPct, "below", 0, "Coverage threshold filter (0-100)")
+	rootCmd.Flags().Float64VarP(&belowPct, "below", "b", 0, "Coverage threshold filter (0-100)")
 	rootCmd.Flags().StringVarP(&outputFormat, "output", "o", "table", "Output format (table, json, csv)")
+	rootCmd.Flags().BoolVar(&tuiMode, "tui", false, "Launch interactive TUI for exploring coverage data")
 
 	// Set the run function for the root command
 	rootCmd.RunE = runParse
@@ -181,6 +181,10 @@ func runParse(cmd *cobra.Command, args []string) error {
 	}
 
 	// Output results
+	if tuiMode {
+		return outputTUI(report)
+	}
+
 	switch strings.ToLower(outputFormat) {
 	case "json":
 		return outputJSON(report)
@@ -193,111 +197,15 @@ func runParse(cmd *cobra.Command, args []string) error {
 	}
 }
 
-// filterBelowThreshold filters files with coverage below the threshold
-func filterBelowThreshold(report *models.CoverageReport, threshold float64) *models.CoverageReport {
-	filtered := models.NewCoverageReport()
-	filtered.TestName = report.TestName
+// outputTUI launches an interactive TUI for exploring coverage data
+func outputTUI(report *models.CoverageReport) error {
+	// Create initial table model
+	model := newTableModel(report)
 
-	for _, fileCov := range report.Files {
-		if fileCov.CoveragePct < threshold {
-			filtered.AddFile(fileCov)
-		}
-	}
-
-	return filtered
-}
-
-// outputTable outputs coverage data in a readable table format
-func outputTable(report *models.CoverageReport) error {
-	if report.TestName != "" {
-		fmt.Printf("Test Name: %s\n\n", report.TestName)
-	}
-
-	if len(report.Files) == 0 {
-		fmt.Println("No files found in coverage report")
-		return nil
-	}
-
-	// Calculate overall coverage
-	totalLines, totalCovered, overallPct := report.CalculateOverallCoverage()
-
-	// Sort files by name for consistent output
-	filenames := make([]string, 0, len(report.Files))
-	for filename := range report.Files {
-		filenames = append(filenames, filename)
-	}
-	sort.Strings(filenames)
-
-	// Print table header
-	fmt.Println("┌────────────────────────────────────────────────────────────────────────────┐")
-	fmt.Println("│                         Coverage Report                                   │")
-	fmt.Println("├────────────────────────────────────────────────────────────────────────────┤")
-	fmt.Printf("│ %-50s │ %10s │ %10s │\n", "File", "Coverage", "Lines")
-	fmt.Println("├────────────────────────────────────────────────────────────────────────────┤")
-
-	// Print file rows
-	for _, filename := range filenames {
-		fileCov := report.Files[filename]
-		// Truncate filename if too long
-		displayName := filename
-		if len(displayName) > 50 {
-			displayName = "..." + displayName[len(displayName)-47:]
-		}
-		fmt.Printf("│ %-50s │ %9.2f%% │ %4d/%4d │\n",
-			displayName,
-			fileCov.CoveragePct,
-			fileCov.CoveredLines,
-			fileCov.TotalLines)
-	}
-
-	// Print summary
-	fmt.Println("├────────────────────────────────────────────────────────────────────────────┤")
-	fmt.Printf("│ %-50s │ %9.2f%% │ %4d/%4d │\n",
-		"OVERALL",
-		overallPct,
-		totalCovered,
-		totalLines)
-	fmt.Println("└────────────────────────────────────────────────────────────────────────────┘")
-
-	return nil
-}
-
-// outputJSON outputs coverage data in JSON format
-func outputJSON(report *models.CoverageReport) error {
-	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(report)
-}
-
-// outputCSV outputs coverage data in CSV format
-func outputCSV(report *models.CoverageReport) error {
-	writer := csv.NewWriter(os.Stdout)
-	defer writer.Flush()
-
-	// Write header
-	if err := writer.Write([]string{"File", "Coverage %", "Covered Lines", "Total Lines"}); err != nil {
-		return fmt.Errorf("failed to write CSV header: %w", err)
-	}
-
-	// Sort files by name for consistent output
-	filenames := make([]string, 0, len(report.Files))
-	for filename := range report.Files {
-		filenames = append(filenames, filename)
-	}
-	sort.Strings(filenames)
-
-	// Write file rows
-	for _, filename := range filenames {
-		fileCov := report.Files[filename]
-		row := []string{
-			filename,
-			fmt.Sprintf("%.2f", fileCov.CoveragePct),
-			fmt.Sprintf("%d", fileCov.CoveredLines),
-			fmt.Sprintf("%d", fileCov.TotalLines),
-		}
-		if err := writer.Write(row); err != nil {
-			return fmt.Errorf("failed to write CSV row: %w", err)
-		}
+	// Run the TUI with mouse support
+	p := tea.NewProgram(model, tea.WithMouseAllMotion())
+	if _, err := p.Run(); err != nil {
+		return fmt.Errorf("failed to run TUI: %w", err)
 	}
 
 	return nil

@@ -14,17 +14,20 @@ var rootCmd = &cobra.Command{
 from multiple languages including Rust, Go, TypeScript, and JavaScript.
 
 It supports LCOV format (.lcov, .info) and Go coverage format (.out).`,
-	Example: `  # Parse a coverage file and display summary
+	Example: `  # Parse a coverage file and display table
   covpeek --file coverage.lcov
 
-  # Force format detection and output as JSON
-  covpeek --file coverage.out --format go --output json
+  # Launch interactive TUI
+  covpeek --file coverage.lcov --tui
+
+  # Output as JSON
+  covpeek --file coverage.out --output json
 
   # Filter files below 80% coverage
   covpeek --file coverage.lcov --below 80
 
-  # Output as CSV
-  covpeek --file lcov.info --output csv`,
+  # Force format detection
+  covpeek --file coverage.txt --force-format lcov`,
 	SilenceUsage: false,
 }
 
