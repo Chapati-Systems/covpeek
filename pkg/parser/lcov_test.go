@@ -19,48 +19,48 @@ LH:2
 LF:3
 end_of_record
 `
-	
+
 	parser := NewLCOVParser()
 	report, err := parser.Parse(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	if report.TestName != "test_name" {
 		t.Errorf("Expected test name 'test_name', got: %s", report.TestName)
 	}
-	
+
 	if len(report.Files) != 1 {
 		t.Fatalf("Expected 1 file, got: %d", len(report.Files))
 	}
-	
+
 	file := report.Files["src/lib.rs"]
 	if file == nil {
 		t.Fatalf("Expected file 'src/lib.rs' not found")
 	}
-	
+
 	if file.TotalLines != 3 {
 		t.Errorf("Expected 3 total lines, got: %d", file.TotalLines)
 	}
-	
+
 	if file.CoveredLines != 2 {
 		t.Errorf("Expected 2 covered lines, got: %d", file.CoveredLines)
 	}
-	
+
 	expectedCoverage := 66.67
 	if file.CoveragePct < expectedCoverage-0.1 || file.CoveragePct > expectedCoverage+0.1 {
 		t.Errorf("Expected coverage ~%.2f%%, got: %.2f%%", expectedCoverage, file.CoveragePct)
 	}
-	
+
 	if len(file.Functions) != 1 {
 		t.Fatalf("Expected 1 function, got: %d", len(file.Functions))
 	}
-	
+
 	if file.Functions[0].Name != "my_function" {
 		t.Errorf("Expected function name 'my_function', got: %s", file.Functions[0].Name)
 	}
-	
+
 	if file.Functions[0].ExecutionCount != 3 {
 		t.Errorf("Expected function execution count 3, got: %d", file.Functions[0].ExecutionCount)
 	}
@@ -81,32 +81,32 @@ LH:0
 LF:2
 end_of_record
 `
-	
+
 	parser := NewLCOVParser()
 	report, err := parser.Parse(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	if len(report.Files) != 2 {
 		t.Fatalf("Expected 2 files, got: %d", len(report.Files))
 	}
-	
+
 	file1 := report.Files["file1.rs"]
 	if file1 == nil {
 		t.Fatalf("Expected file 'file1.rs' not found")
 	}
-	
+
 	if file1.CoveragePct != 100.0 {
 		t.Errorf("Expected file1 coverage 100%%, got: %.2f%%", file1.CoveragePct)
 	}
-	
+
 	file2 := report.Files["file2.rs"]
 	if file2 == nil {
 		t.Fatalf("Expected file 'file2.rs' not found")
 	}
-	
+
 	if file2.CoveragePct != 0.0 {
 		t.Errorf("Expected file2 coverage 0%%, got: %.2f%%", file2.CoveragePct)
 	}
@@ -121,21 +121,21 @@ LH:1
 LF:1
 end_of_record
 `
-	
+
 	parser := NewLCOVParser()
 	report, err := parser.Parse(strings.NewReader(input))
-	
+
 	// Should not error, but should log warnings
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	// Check that we collected warnings
 	warnings := parser.GetWarnings()
 	if len(warnings) == 0 {
 		t.Error("Expected warnings for malformed line, got none")
 	}
-	
+
 	// Should still have parsed valid lines
 	if len(report.Files) != 1 {
 		t.Fatalf("Expected 1 file, got: %d", len(report.Files))
@@ -144,14 +144,14 @@ end_of_record
 
 func TestLCOVParser_Parse_EmptyFile(t *testing.T) {
 	input := ``
-	
+
 	parser := NewLCOVParser()
 	report, err := parser.Parse(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	if len(report.Files) != 0 {
 		t.Errorf("Expected 0 files, got: %d", len(report.Files))
 	}
@@ -165,24 +165,24 @@ LH:2
 LF:2
 end_of_record
 `
-	
+
 	parser := NewLCOVParser()
 	report, err := parser.Parse(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	file := report.Files["file.rs"]
 	if file == nil {
 		t.Fatalf("Expected file 'file.rs' not found")
 	}
-	
+
 	line1 := file.Lines[1]
 	if line1.Checksum != "abc123def456" {
 		t.Errorf("Expected checksum 'abc123def456', got: %s", line1.Checksum)
 	}
-	
+
 	line2 := file.Lines[2]
 	if line2.Checksum != "" {
 		t.Errorf("Expected empty checksum, got: %s", line2.Checksum)
@@ -194,20 +194,20 @@ func TestLCOVParser_Parse_RecordWithoutSourceFile(t *testing.T) {
 DA:1,1
 end_of_record
 `
-	
+
 	parser := NewLCOVParser()
 	report, err := parser.Parse(strings.NewReader(input))
-	
+
 	// Should not error, but should generate warnings
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	warnings := parser.GetWarnings()
 	if len(warnings) == 0 {
 		t.Error("Expected warnings for DA without SF, got none")
 	}
-	
+
 	if len(report.Files) != 0 {
 		t.Errorf("Expected 0 files, got: %d", len(report.Files))
 	}
@@ -224,14 +224,14 @@ LH:1
 LF:1
 end_of_record
 `
-	
+
 	parser := NewLCOVParser()
 	report, err := parser.Parse(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	// Branch coverage records should be gracefully skipped
 	file := report.Files["file.rs"]
 	if file == nil {
@@ -247,20 +247,20 @@ LH:1
 LF:1
 end_of_record
 `
-	
+
 	parser := NewLCOVParser()
 	report, err := parser.Parse(strings.NewReader(input))
-	
+
 	// Should not error, but should log warning
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	warnings := parser.GetWarnings()
 	if len(warnings) == 0 {
 		t.Error("Expected warning for unknown record type, got none")
 	}
-	
+
 	// Should still parse valid records
 	file := report.Files["file.rs"]
 	if file == nil {
@@ -281,20 +281,20 @@ LH:1
 LF:1
 end_of_record
 `
-	
+
 	parser := NewLCOVParser()
 	report, err := parser.Parse(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	// FNF and FNH are parsed but not validated
 	file := report.Files["file.rs"]
 	if file == nil {
 		t.Fatalf("Expected file 'file.rs' not found")
 	}
-	
+
 	if len(file.Functions) != 2 {
 		t.Errorf("Expected 2 functions, got: %d", len(file.Functions))
 	}
@@ -308,14 +308,14 @@ LH:1
 LF:1
 end_of_record
 `
-	
+
 	parser := NewLCOVParser()
 	_, err := parser.Parse(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	warnings := parser.GetWarnings()
 	if len(warnings) == 0 {
 		t.Error("Expected warning for invalid FN, got none")
@@ -330,14 +330,14 @@ LH:1
 LF:1
 end_of_record
 `
-	
+
 	parser := NewLCOVParser()
 	_, err := parser.Parse(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	warnings := parser.GetWarnings()
 	if len(warnings) == 0 {
 		t.Error("Expected warning for invalid FNDA, got none")
@@ -351,14 +351,14 @@ LH:invalid
 LF:1
 end_of_record
 `
-	
+
 	parser := NewLCOVParser()
 	_, err := parser.Parse(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	warnings := parser.GetWarnings()
 	if len(warnings) == 0 {
 		t.Error("Expected warning for invalid LH, got none")
@@ -372,14 +372,14 @@ LH:1
 LF:invalid
 end_of_record
 `
-	
+
 	parser := NewLCOVParser()
 	_, err := parser.Parse(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	warnings := parser.GetWarnings()
 	if len(warnings) == 0 {
 		t.Error("Expected warning for invalid LF, got none")

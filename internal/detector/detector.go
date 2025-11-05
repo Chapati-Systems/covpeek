@@ -33,24 +33,24 @@ func (f CoverageFormat) String() string {
 // DetectFormat attempts to detect the coverage file format by examining the file content
 func DetectFormat(reader io.Reader) (CoverageFormat, error) {
 	scanner := bufio.NewScanner(reader)
-	
+
 	// Read first few lines to determine format
 	lineCount := 0
 	maxLinesToCheck := 10
-	
+
 	hasLCOVMarkers := false
 	hasGoMarkers := false
-	
+
 	for scanner.Scan() && lineCount < maxLinesToCheck {
 		line := strings.TrimSpace(scanner.Text())
-		
+
 		lineCount++
-		
+
 		// Skip empty lines
 		if line == "" {
 			continue
 		}
-		
+
 		// Check for Go coverage format markers
 		// Go coverage files start with "mode: set|count|atomic"
 		if lineCount == 1 && strings.HasPrefix(line, "mode:") {
@@ -62,7 +62,7 @@ func DetectFormat(reader io.Reader) (CoverageFormat, error) {
 				}
 			}
 		}
-		
+
 		// Check for LCOV format markers
 		if strings.HasPrefix(line, "TN:") ||
 			strings.HasPrefix(line, "SF:") ||
@@ -75,38 +75,38 @@ func DetectFormat(reader io.Reader) (CoverageFormat, error) {
 			hasLCOVMarkers = true
 		}
 	}
-	
+
 	if err := scanner.Err(); err != nil {
 		return UnknownFormat, err
 	}
-	
+
 	// Determine format based on markers found
 	if hasGoMarkers {
 		return GoCoverFormat, nil
 	}
-	
+
 	if hasLCOVMarkers {
 		return LCOVFormat, nil
 	}
-	
+
 	return UnknownFormat, nil
 }
 
 // DetectFormatByExtension attempts to detect format based on file extension
 func DetectFormatByExtension(filename string) CoverageFormat {
 	filename = strings.ToLower(filename)
-	
+
 	// Go coverage files
 	if strings.HasSuffix(filename, ".out") {
 		return GoCoverFormat
 	}
-	
+
 	// LCOV format files
 	if strings.HasSuffix(filename, ".lcov") ||
 		strings.HasSuffix(filename, ".info") ||
 		strings.Contains(filename, "lcov.info") {
 		return LCOVFormat
 	}
-	
+
 	return UnknownFormat
 }
