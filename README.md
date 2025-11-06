@@ -1,5 +1,7 @@
 # covpeek
 
+![Coverage](coverage-badge.svg)
+
 Cross-language Coverage Report CLI Parser in Go
 
 Parse coverage reports from Rust, Go, TypeScript, and JavaScript with one unified tool.
@@ -66,6 +68,22 @@ Force a specific format (bypass auto-detection):
 Filter files below coverage threshold:
 
     covpeek --file coverage.lcov --below 80
+
+### Generate Coverage Badge
+
+Generate an SVG badge for embedding in README or dashboards:
+
+    covpeek badge --file coverage.lcov --output coverage-badge.svg
+
+Auto-detect coverage file:
+
+    covpeek badge --output coverage-badge.svg
+
+Customize label and style:
+
+    covpeek badge --file coverage.out --label "test coverage" --style plastic --output badge.svg
+
+Supported styles: `flat`, `plastic`, `flat-square`
 
 ### Examples
 

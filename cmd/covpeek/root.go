@@ -21,6 +21,9 @@ and Python coverage formats (.xml, .json).`,
   # Launch interactive TUI
   covpeek --file coverage.lcov --tui
 
+  # Generate coverage badge
+  covpeek badge --file coverage.lcov --output badge.svg
+
   # Output as JSON
   covpeek --file coverage.out --output json
 

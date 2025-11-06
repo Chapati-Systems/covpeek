@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -195,16 +196,40 @@ func TestRunParseHelpArgument(t *testing.T) {
 	}
 }
 
-// TestRunParseInvalidFile tests error handling for invalid file
-func TestRunParseInvalidFile(t *testing.T) {
-	coverageFile = ""
-	forceFormat = ""
-	belowPct = 0
-	outputFormat = "table"
+// TestBadgeGeneration tests the badge command with real coverage file
+func TestBadgeGeneration(t *testing.T) {
+	tmpFile, err := os.CreateTemp("", "badge-*.svg")
+	if err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
 
-	rootCmd.SetArgs([]string{"--file", "/nonexistent/file.lcov"})
-	err := rootCmd.Execute()
-	// Error should be returned for nonexistent file
-	// However, if silent mode is on, check that behavior
-	t.Logf("Got error (expected): %v", err)
+	// Use the existing sample.lcov
+	coverageFile = "../../testdata/sample.lcov"
+	badgeFile = "../../testdata/sample.lcov"
+	badgeOutput = tmpFile.Name()
+	badgeLabel = "coverage"
+	badgeStyle = "flat"
+
+	rootCmd.SetArgs([]string{"badge", "--file", "../../testdata/sample.lcov", "--output", tmpFile.Name()})
+
+	err = rootCmd.Execute()
+	if err != nil {
+		t.Fatalf("Expected no error, got: %v", err)
+	}
+
+	// Check file exists and has SVG content
+	content, err := os.ReadFile(tmpFile.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(content) == 0 {
+		t.Error("SVG file is empty")
+	}
+	if !strings.Contains(string(content), "<svg") {
+		t.Error("File does not contain SVG")
+	}
+	if !strings.Contains(string(content), "coverage") {
+		t.Error("SVG does not contain label")
+	}
 }

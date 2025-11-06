@@ -13,6 +13,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-arm64
+    if: "!contains(github.event.head_commit.message, 'Update coverage badge')"
 
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +22,7 @@ jobs:
             fetch-tags: true
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: '1.25.3'
 
       - name: Test & Format
         run: |
@@ -32,6 +33,17 @@ jobs:
         run: |
           go build -o covpeek ./cmd/covpeek
           ./covpeek ci --min 80
+          
+      - name: Generate Badge
+        run: |
+          ./covpeek badge --file coverage.out --output coverage-badge.svg
+          
+      - name: Commit Badge
+        run: |
+          git config --local user.email "action@gitea.com"
+          git config --local user.name "Gitea Action"
+          git add coverage-badge.svg
+          git diff --staged --quiet || git commit -m "Update coverage badge"
           
       - name: Lint
         run: |
