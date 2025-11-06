@@ -3,7 +3,6 @@ module github.com/Chapati-Systems/covpeek
 go 1.25.3
 
 require (
-	git.kernel.fun/chapati.systems/covpeek v0.0.0-20251106183956-d4106817fa0a
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0

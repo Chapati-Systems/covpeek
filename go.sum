@@ -1,5 +1,3 @@
-git.kernel.fun/chapati.systems/covpeek v0.0.0-20251106183956-d4106817fa0a h1:VnC041r7d3i+4iYnCxCCmXo+tGdYckfhnqO/Nn/rPok=
-git.kernel.fun/chapati.systems/covpeek v0.0.0-20251106183956-d4106817fa0a/go.mod h1:OZGrcL759meJIOM7U7prd3D4BegGf+l8dVupbmSiyAg=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
 github.com/aymanbagabas/go-udiff v0.2.0 h1:TK0fH4MteXUDspT88n8CKzvK0X9O2xu9yQjWpi6yML8=
