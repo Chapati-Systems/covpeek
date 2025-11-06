@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"git.kernel.fun/chapati.systems/covpeek/pkg/models"
+	"github.com/Chapati-Systems/covpeek/pkg/models"
 )
 
 // PyCoverXMLParser parses Python coverage XML format (Cobertura-compatible)

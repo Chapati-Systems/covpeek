@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"git.kernel.fun/chapati.systems/covpeek/pkg/models"
+	"github.com/Chapati-Systems/covpeek/pkg/models"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

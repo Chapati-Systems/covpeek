@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"git.kernel.fun/chapati.systems/covpeek/pkg/models"
+	"github.com/Chapati-Systems/covpeek/pkg/models"
 )
 
 // PyCoverJSONParser parses Python coverage JSON format

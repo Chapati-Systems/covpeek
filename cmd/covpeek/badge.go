@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"git.kernel.fun/chapati.systems/covpeek/pkg/models"
+	"github.com/Chapati-Systems/covpeek/pkg/models"
 	"github.com/spf13/cobra"
 )
 

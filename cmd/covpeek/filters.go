@@ -1,7 +1,7 @@
 package main
 
 import (
-	"git.kernel.fun/chapati.systems/covpeek/pkg/models"
+	"github.com/Chapati-Systems/covpeek/pkg/models"
 )
 
 // filterBelowThreshold filters files with coverage below the threshold

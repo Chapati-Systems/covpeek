@@ -17,8 +17,8 @@ func TestRunParseWithGoCoverage(t *testing.T) {
 
 	// Write valid Go coverage data
 	goCoverage := `mode: set
-git.kernel.fun/chapati.systems/covpeek/pkg/models/coverage.go:12.49,14.2 1 1
-git.kernel.fun/chapati.systems/covpeek/pkg/models/coverage.go:17.56,19.2 1 1
+github.com/Chapati-Systems/covpeek/pkg/models/coverage.go:12.49,14.2 1 1
+github.com/Chapati-Systems/covpeek/pkg/models/coverage.go:17.56,19.2 1 1
 `
 	_, _ = tmpFile.WriteString(goCoverage)
 	_ = tmpFile.Close()

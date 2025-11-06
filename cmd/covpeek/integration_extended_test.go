@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"git.kernel.fun/chapati.systems/covpeek/pkg/models"
+	"github.com/Chapati-Systems/covpeek/pkg/models"
 )
 
 // TestRunParseInvalidGoFormat tests error handling for invalid Go coverage content
@@ -510,7 +510,7 @@ func TestRunCICommand(t *testing.T) {
 
 	// Write valid Go coverage data
 	goData := `mode: set
-git.kernel.fun/chapati.systems/covpeek/main.go:6.14,7.2 1 1
+github.com/Chapati-Systems/covpeek/main.go:6.14,7.2 1 1
 `
 	_, _ = tmpFile.WriteString(goData)
 	_ = tmpFile.Close()

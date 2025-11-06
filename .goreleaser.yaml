@@ -1,9 +1,6 @@
-gitea_urls:
-  api: https://git.kernel.fun/api/v1
-  download: https://git.kernel.fun
 release:
-  gitea:
-    owner: chapati.systems
+  github:
+    owner: Chapati-Systems
     name: covpeek
 before:
   hooks:
@@ -61,14 +58,14 @@ nfpms:
     vendor: Chapati Systems GmbH
 
     # Your app's homepage.
-    homepage: https://chapati.systems/covpeek
+    homepage: https://github.com/Chapati-Systems/covpeek
 
     # Your app's maintainer (probably you).
     maintainer: Christoph Miksche <covpeek25@chapati.systems>
 
     # Your app's description.
     description: |-
-      Automatically updates lots of Software which has no built-in auto update functionality.
+      Cross-language Coverage Report CLI Parser for Rust, Go, TypeScript, and JavaScript.
 
     # Your app's license.
     license: AGPL-3.0

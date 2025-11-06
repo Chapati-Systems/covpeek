@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"git.kernel.fun/chapati.systems/covpeek/pkg/models"
+	"github.com/Chapati-Systems/covpeek/pkg/models"
 )
 
 // GoCoverParser parses Go coverage format (.out) files

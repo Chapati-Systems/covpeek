@@ -8,7 +8,7 @@ import (
 	"sort"
 	"text/tabwriter"
 
-	"git.kernel.fun/chapati.systems/covpeek/pkg/models"
+	"github.com/Chapati-Systems/covpeek/pkg/models"
 )
 
 // outputTable outputs coverage data in a readable table format

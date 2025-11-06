@@ -6,9 +6,9 @@ import (
 	"io"
 	"os"
 
-	"git.kernel.fun/chapati.systems/covpeek/internal/detector"
-	"git.kernel.fun/chapati.systems/covpeek/pkg/models"
-	"git.kernel.fun/chapati.systems/covpeek/pkg/parser"
+	"github.com/Chapati-Systems/covpeek/internal/detector"
+	"github.com/Chapati-Systems/covpeek/pkg/models"
+	"github.com/Chapati-Systems/covpeek/pkg/parser"
 	"github.com/spf13/cobra"
 )
 
