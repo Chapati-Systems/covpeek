@@ -1,6 +1,6 @@
 # covpeek
 
-[![asciicast](https://asciinema.org/a/754207.svg)](https://asciinema.org/a/754207)
+![Coverage](coverage-badge.svg)
 
 Cross-language Coverage Report CLI Parser in Go
 
@@ -8,7 +8,7 @@ Parse coverage reports from Rust, Go, TypeScript, JavaScript, and Python with on
 
 ## Demo
 
-![Covpeek Demo](demo.gif)  <!-- Add a GIF showing the tool in action, e.g., parsing a file and displaying output -->
+[![asciicast](https://asciinema.org/a/754207.svg)](https://asciinema.org/a/754207)
 
 ## Features
 
@@ -296,5 +296,7 @@ Run tests:
     go test -v ./...
 
 ## License
+
+Licensed under the AGPL-3.0 license
 
 See LICENSE file for details.

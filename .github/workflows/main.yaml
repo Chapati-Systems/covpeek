@@ -63,6 +63,13 @@ jobs:
             fetch-depth: 0
             fetch-tags: true
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.3'
+
+      - name: Install svu
+        run: go install github.com/caarlos0/svu@latest
+
       - name: Tag
         run: |
           git tag "$(svu next --force-patch-increment)"
