@@ -151,21 +151,6 @@ func TestRunParseHelp(t *testing.T) {
 	_ = err // We expect this might return an error or nil depending on implementation
 }
 
-func TestOutputTUIError(t *testing.T) {
-	// Test that outputTUI handles errors gracefully
-	report := createTestReport()
-
-	// The function should not panic
-	defer func() {
-		if r := recover(); r != nil {
-			t.Errorf("outputTUI panicked: %v", r)
-		}
-	}()
-
-	// We can't easily test the full TUI, but we can test initialization
-	_ = outputTUI(report) // This will try to run the TUI, but should not panic
-}
-
 func TestFilterBelowThresholdNoMatches(t *testing.T) {
 	report := createTestReport()
 
@@ -174,6 +159,37 @@ func TestFilterBelowThresholdNoMatches(t *testing.T) {
 
 	if len(filtered.Files) != 0 {
 		t.Errorf("Expected 0 files below 50%%, got %d", len(filtered.Files))
+	}
+}
+
+func TestOutputCSVEmptyReport(t *testing.T) {
+	report := models.NewCoverageReport()
+
+	// Capture stdout
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	err := outputCSV(report)
+	_ = w.Close()
+	os.Stdout = oldStdout
+
+	if err != nil {
+		t.Fatalf("outputCSV with empty report failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	_, _ = io.Copy(&buf, r)
+	output := buf.String()
+
+	// Should have header only
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	if len(lines) != 1 {
+		t.Errorf("Expected 1 line for empty report, got %d", len(lines))
+	}
+
+	if !strings.Contains(output, "File") {
+		t.Error("CSV should contain header")
 	}
 }
 
@@ -197,53 +213,41 @@ func TestOutputTableEmptyReport(t *testing.T) {
 	_, _ = io.Copy(&buf, r)
 	output := buf.String()
 
-	if !strings.Contains(output, "No files found") {
-		t.Error("Empty report should indicate no files found")
+	// Should print "No files found in coverage report"
+	if !strings.Contains(output, "No files found in coverage report") {
+		t.Error("Table should contain 'No files found in coverage report'")
 	}
 }
 
-func TestOutputTUI(t *testing.T) {
-	report := createTestReport()
+func TestOutputJSONEmptyReport(t *testing.T) {
+	report := models.NewCoverageReport()
 
-	// For TUI, we can't easily test the interactive part,
-	// but we can test that the function doesn't error immediately
-	// In a real scenario, this would launch the TUI
-	// For testing, we'll just ensure it doesn't panic on creation
-	defer func() {
-		if r := recover(); r != nil {
-			t.Errorf("outputTUI panicked: %v", r)
-		}
-	}()
+	// Capture stdout
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
 
-	// Test that newTableModel works without panicking
-	model := newTableModel(report)
-	if len(model.table.Rows()) != 2 {
-		t.Errorf("Expected 2 rows, got %d", len(model.table.Rows()))
+	err := outputJSON(report)
+	_ = w.Close()
+	os.Stdout = oldStdout
+
+	if err != nil {
+		t.Fatalf("outputJSON with empty report failed: %v", err)
 	}
 
-	// Test sorting functionality
-	model.sortByColumn(0) // Sort by file name (descending initially)
-	rows := model.table.Rows()
-	if rows[0][0] != "test2.go" { // test2.go comes before test1.go in descending alphabetical order
-		t.Errorf("Expected first row to be test2.go after sorting by name, got %s", rows[0][0])
+	var buf bytes.Buffer
+	_, _ = io.Copy(&buf, r)
+	output := buf.String()
+
+	// Should be valid JSON
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		t.Errorf("JSON output is not valid: %v", err)
 	}
 
-	model.sortByColumn(3) // Sort by coverage (descending)
-	rows = model.table.Rows()
-	if rows[0][3] != "100.00" {
-		t.Errorf("Expected first row to have 100.00%% coverage after sorting, got %s", rows[0][3])
-	}
-
-	// Test View method doesn't panic
-	view := model.View()
-	if !strings.Contains(view, "Coverage Report") {
-		t.Error("View should contain title")
-	}
-	if !strings.Contains(view, "File") {
-		t.Error("View should contain File header")
-	}
-	if !strings.Contains(view, "Total Lines") {
-		t.Error("View should contain Total Lines header")
+	// Should have empty files
+	if files, ok := result["Files"].(map[string]interface{}); !ok || len(files) != 0 {
+		t.Error("Expected empty Files map")
 	}
 }
 
@@ -375,4 +379,43 @@ func createTestReport() *models.CoverageReport {
 	report.AddFile(file2)
 
 	return report
+}
+
+func TestTableModel(t *testing.T) {
+	report := createTestReport()
+
+	// Test that newTableModel works without panicking
+	model := newTableModel(report)
+	if len(model.table.Rows()) != 2 {
+		t.Errorf("Expected 2 rows, got %d", len(model.table.Rows()))
+	}
+
+	// Test sorting functionality
+	model.sortByColumn(0) // Sort by file name (descending initially)
+	rows := model.table.Rows()
+	if rows[0][0] != "test2.go" { // test2.go comes before test1.go in descending alphabetical order
+		t.Errorf("Expected first row to be test2.go after sorting by name, got %s", rows[0][0])
+	}
+
+	model.sortByColumn(3) // Sort by coverage (descending)
+	rows = model.table.Rows()
+	if rows[0][3] != "100.00" {
+		t.Errorf("Expected first row to have 100.00%% coverage after sorting, got %s", rows[0][3])
+	}
+
+	// Test View method doesn't panic
+	view := model.View()
+	if !strings.Contains(view, "Coverage Report") {
+		t.Error("View should contain title")
+	}
+	if !strings.Contains(view, "File") {
+		t.Error("View should contain File header")
+	}
+	if !strings.Contains(view, "Total Lines") {
+		t.Error("View should contain Total Lines header")
+	}
+
+	// Test Init
+	cmd := model.Init()
+	_ = cmd // Just check it doesn't panic
 }

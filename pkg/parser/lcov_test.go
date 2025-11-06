@@ -385,3 +385,107 @@ end_of_record
 		t.Error("Expected warning for invalid LF, got none")
 	}
 }
+
+func TestLCOVParser_Parse_WithBranches(t *testing.T) {
+	input := `TN:test_name
+SF:src/lib.rs
+FN:5,my_function
+FNDA:3,my_function
+FNF:1
+FNH:1
+DA:5,3
+DA:6,3
+BRF:2
+BRH:1
+BRDA:5,0,1,-
+BRDA:5,0,2,3
+LH:2
+LF:3
+end_of_record
+`
+
+	parser := NewLCOVParser()
+	report, err := parser.Parse(strings.NewReader(input))
+
+	if err != nil {
+		t.Fatalf("Expected no error, got: %v", err)
+	}
+
+	if len(report.Files) != 1 {
+		t.Fatalf("Expected 1 file, got: %d", len(report.Files))
+	}
+
+	file := report.Files["src/lib.rs"]
+	if file == nil {
+		t.Fatalf("Expected file 'src/lib.rs' not found")
+	}
+
+	// Branch coverage is parsed but not used in coverage calculation for now
+	// Just check that parsing doesn't fail
+}
+
+func TestLCOVParser_Parse_EmptyInput(t *testing.T) {
+	input := ``
+
+	parser := NewLCOVParser()
+	report, err := parser.Parse(strings.NewReader(input))
+
+	if err != nil {
+		t.Errorf("Expected no error for empty input, got: %v", err)
+	}
+
+	if report == nil {
+		t.Error("Expected report for empty input")
+	}
+
+	if len(report.Files) != 0 {
+		t.Errorf("Expected 0 files for empty input, got: %d", len(report.Files))
+	}
+}
+
+func TestLCOVParser_Parse_InvalidDA(t *testing.T) {
+	input := `SF:file.rs
+DA:invalid_line
+end_of_record
+`
+
+	parser := NewLCOVParser()
+	report, err := parser.Parse(strings.NewReader(input))
+
+	if err != nil {
+		t.Logf("Got error: %v", err)
+	}
+
+	if report == nil {
+		t.Error("Expected report even with invalid DA")
+	}
+
+	warnings := parser.GetWarnings()
+	if len(warnings) == 0 {
+		t.Error("Expected warning for invalid DA")
+	}
+}
+
+func TestLCOVParser_Parse_MalformedLine(t *testing.T) {
+	input := `SF:file.rs
+malformed line without colon
+DA:1,1
+end_of_record
+`
+
+	parser := NewLCOVParser()
+	report, err := parser.Parse(strings.NewReader(input))
+
+	if err != nil {
+		t.Logf("Got error: %v", err)
+	}
+
+	if report == nil {
+		t.Error("Expected report even with malformed line")
+	}
+
+	warnings := parser.GetWarnings()
+	if len(warnings) == 0 {
+		t.Error("Expected warning for malformed line")
+	}
+}

@@ -42,4 +42,7 @@ func init() {
 	// Explicitly set output streams for help and error messages
 	rootCmd.SetOut(os.Stdout)
 	rootCmd.SetErr(os.Stderr)
+
+	// Add subcommands
+	rootCmd.AddCommand(ciCmd)
 }

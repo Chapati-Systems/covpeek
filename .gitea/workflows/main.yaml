@@ -26,13 +26,13 @@ jobs:
       - name: Test & Format
         run: |
           gofmt -s -w .
-          go test
+          go test -coverprofile=coverage.out ./...
           
-      - name: Build
+      - name: Check Coverage
         run: |
-          go build
-          rm covpeek
-
+          go build -o covpeek ./cmd/covpeek
+          ./covpeek ci --min 80
+          
       - name: Lint
         run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin

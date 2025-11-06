@@ -251,3 +251,99 @@ func TestRunParseDirect(t *testing.T) {
 		t.Errorf("Expected no error with forced format, got: %v", err)
 	}
 }
+
+func TestRunParse(t *testing.T) {
+	// Save originals
+	origFile := coverageFile
+	origFormat := outputFormat
+	origForce := forceFormat
+	origBelow := belowPct
+	origTui := tuiMode
+	defer func() {
+		coverageFile = origFile
+		outputFormat = origFormat
+		forceFormat = origForce
+		belowPct = origBelow
+		tuiMode = origTui
+	}()
+
+	// Test table output
+	coverageFile = "../../testdata/sample.lcov"
+	outputFormat = "table"
+	forceFormat = ""
+	belowPct = 0
+	tuiMode = false
+
+	cmd := &cobra.Command{}
+	err := runParse(cmd, []string{})
+	if err != nil {
+		t.Errorf("runParse failed: %v", err)
+	}
+
+	// Test JSON output
+	outputFormat = "json"
+	err = runParse(cmd, []string{})
+	if err != nil {
+		t.Errorf("runParse JSON failed: %v", err)
+	}
+
+	// Test CSV output
+	outputFormat = "csv"
+	err = runParse(cmd, []string{})
+	if err != nil {
+		t.Errorf("runParse CSV failed: %v", err)
+	}
+
+	// Test with force format
+	forceFormat = "lcov"
+	outputFormat = "table"
+	err = runParse(cmd, []string{})
+	if err != nil {
+		t.Errorf("runParse with force format failed: %v", err)
+	}
+
+	// Test with below filter
+	belowPct = 50
+	err = runParse(cmd, []string{})
+	if err != nil {
+		t.Errorf("runParse with below filter failed: %v", err)
+	}
+}
+
+func TestRunParseNonExistentFile(t *testing.T) {
+	// Save original values
+	origFile := coverageFile
+	origTui := tuiMode
+	defer func() {
+		coverageFile = origFile
+		tuiMode = origTui
+	}()
+
+	cmd := &cobra.Command{}
+
+	// Test non-existent file
+	coverageFile = "nonexistent.lcov"
+	err := runParse(cmd, []string{})
+	if err == nil {
+		t.Error("Expected error for non-existent file")
+	}
+}
+
+func TestRunParseDirectory(t *testing.T) {
+	// Save original values
+	origFile := coverageFile
+	origTui := tuiMode
+	defer func() {
+		coverageFile = origFile
+		tuiMode = origTui
+	}()
+
+	cmd := &cobra.Command{}
+
+	// Test directory instead of file
+	coverageFile = "../../testdata" // This is a directory
+	err := runParse(cmd, []string{})
+	if err == nil {
+		t.Error("Expected error for directory")
+	}
+}
