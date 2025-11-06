@@ -158,24 +158,9 @@ func TestFormatMappingEdgeCases(t *testing.T) {
 func TestValidateFlagsDirect(t *testing.T) {
 	cmd := &cobra.Command{}
 
-	// Test missing file
-	coverageFile = ""
-	err := validateFlags(cmd, []string{})
-	if err == nil || !strings.Contains(err.Error(), "required") {
-		t.Errorf("Expected error for missing file, got: %v", err)
-	}
-
-	// Test nonexistent file
-	coverageFile = "/nonexistent/path/file.lcov"
-	err = validateFlags(cmd, []string{})
-	if err == nil || !strings.Contains(err.Error(), "does not exist") {
-		t.Errorf("Expected error for nonexistent file, got: %v", err)
-	}
-
 	// Test invalid format
-	coverageFile = "../../testdata/sample.lcov"
 	forceFormat = "invalid"
-	err = validateFlags(cmd, []string{})
+	err := validateFlags(cmd, []string{})
 	if err == nil || !strings.Contains(err.Error(), "invalid format") {
 		t.Errorf("Expected error for invalid format, got: %v", err)
 	}

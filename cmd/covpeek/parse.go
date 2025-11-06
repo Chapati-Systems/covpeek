@@ -32,7 +32,7 @@ var (
 
 func init() {
 	// Define flags on root command
-	rootCmd.Flags().StringVarP(&coverageFile, "file", "f", "", "Path to coverage file (required)")
+	rootCmd.Flags().StringVarP(&coverageFile, "file", "f", "", "Path to coverage file")
 	rootCmd.Flags().StringVar(&forceFormat, "format", "", "Override format detection (rust, go, ts)")
 	rootCmd.Flags().Float64VarP(&belowPct, "below", "b", 0, "Coverage threshold filter (0-100)")
 	rootCmd.Flags().StringVarP(&outputFormat, "output", "o", "table", "Output format (table, json, csv)")
@@ -44,30 +44,6 @@ func init() {
 
 // validateFlags validates all flag inputs before execution
 func validateFlags(cmd *cobra.Command, args []string) error {
-	// Validate file exists and is readable
-	if coverageFile == "" {
-		return fmt.Errorf("--file flag is required")
-	}
-
-	fileInfo, err := os.Stat(coverageFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return fmt.Errorf("file does not exist: %s", coverageFile)
-		}
-		return fmt.Errorf("cannot access file %s: %w", coverageFile, err)
-	}
-
-	if fileInfo.IsDir() {
-		return fmt.Errorf("path is a directory, not a file: %s", coverageFile)
-	}
-
-	// Test if file is readable
-	file, err := os.Open(coverageFile)
-	if err != nil {
-		return fmt.Errorf("cannot read file %s: %w", coverageFile, err)
-	}
-	_ = file.Close()
-
 	// Validate format if specified
 	if forceFormat != "" {
 		validFormats := map[string]bool{
@@ -113,10 +89,36 @@ func runParse(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Open coverage file
+	// If no file specified, auto-detect
+	if coverageFile == "" {
+		existingFiles := detectExistingCoverageFiles()
+		if len(existingFiles) == 0 {
+			return fmt.Errorf("no coverage files detected in standard locations. Please specify --file")
+		}
+		if len(existingFiles) > 1 {
+			return fmt.Errorf("multiple coverage files detected: %v. Please specify --file", existingFiles)
+		}
+		coverageFile = existingFiles[0]
+		cmd.PrintErrf("Auto-detected coverage file: %s\n", coverageFile)
+	}
+
+	// Validate file exists and is readable
+	fileInfo, err := os.Stat(coverageFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("file does not exist: %s", coverageFile)
+		}
+		return fmt.Errorf("cannot access file %s: %w", coverageFile, err)
+	}
+
+	if fileInfo.IsDir() {
+		return fmt.Errorf("path is a directory, not a file: %s", coverageFile)
+	}
+
+	// Test if file is readable
 	file, err := os.Open(coverageFile)
 	if err != nil {
-		return fmt.Errorf("failed to open coverage file: %w", err)
+		return fmt.Errorf("cannot read file %s: %w", coverageFile, err)
 	}
 	defer func() { _ = file.Close() }()
 

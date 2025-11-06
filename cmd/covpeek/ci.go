@@ -34,30 +34,18 @@ func runCI(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("--min must be between 0 and 100, got: %.2f", minCoverage)
 	}
 
-	// Define standard locations
-	possibleFiles := []string{
-		"coverage.out",                 // Go
-		"test/coverage.out",            // Go
-		"lcov.info",                    // Rust/TS
-		"target/coverage/lcov.info",    // Rust
-		"coverage/lcov.info",           // TS
-		"coverage/coverage-final.json", // TS
-		"coverage.xml",                 // Python
-		"coverage.json",                // Python
-	}
+	existingFiles := detectExistingCoverageFiles()
 
 	var reports []*models.CoverageReport
 
-	for _, file := range possibleFiles {
-		if _, err := os.Stat(file); err == nil {
-			// File exists, try to parse
-			report, err := parseCoverageFile(file)
-			if err != nil {
-				cmd.PrintErrf("Warning: failed to parse %s: %v\n", file, err)
-				continue
-			}
-			reports = append(reports, report)
+	for _, file := range existingFiles {
+		// File exists, try to parse
+		report, err := parseCoverageFile(file)
+		if err != nil {
+			cmd.PrintErrf("Warning: failed to parse %s: %v\n", file, err)
+			continue
 		}
+		reports = append(reports, report)
 	}
 
 	if len(reports) == 0 {
@@ -81,6 +69,30 @@ func runCI(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func detectExistingCoverageFiles() []string {
+	possibleFiles := getPossibleCoverageFiles()
+	var existingFiles []string
+	for _, file := range possibleFiles {
+		if _, err := os.Stat(file); err == nil {
+			existingFiles = append(existingFiles, file)
+		}
+	}
+	return existingFiles
+}
+
+func getPossibleCoverageFiles() []string {
+	return []string{
+		"coverage.out",                 // Go
+		"test/coverage.out",            // Go
+		"lcov.info",                    // Rust/TS
+		"target/coverage/lcov.info",    // Rust
+		"coverage/lcov.info",           // TS
+		"coverage/coverage-final.json", // TS
+		"coverage.xml",                 // Python
+		"coverage.json",                // Python
+	}
 }
 
 func parseCoverageFile(filePath string) (*models.CoverageReport, error) {

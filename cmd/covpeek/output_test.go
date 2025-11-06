@@ -55,6 +55,33 @@ func TestOutputTable(t *testing.T) {
 	}
 }
 
+func TestOutputTableWithTestName(t *testing.T) {
+	report := createTestReport()
+	report.TestName = "MyTestSuite"
+
+	// Capture stdout
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	err := outputTable(report)
+	_ = w.Close()
+	os.Stdout = oldStdout
+
+	if err != nil {
+		t.Fatalf("outputTable failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	_, _ = io.Copy(&buf, r)
+	output := buf.String()
+
+	// Check for test name
+	if !strings.Contains(output, "Test Name: MyTestSuite") {
+		t.Error("Table output should contain test name")
+	}
+}
+
 func TestOutputJSON(t *testing.T) {
 	report := createTestReport()
 
@@ -266,31 +293,9 @@ func TestValidateFlags(t *testing.T) {
 
 	cmd := &cobra.Command{}
 
-	// Test missing file flag
-	coverageFile = ""
-	err := validateFlags(cmd, []string{})
-	if err == nil {
-		t.Error("Expected error for missing file flag")
-	}
-
-	// Test file doesn't exist
-	coverageFile = "nonexistent.lcov"
-	err = validateFlags(cmd, []string{})
-	if err == nil {
-		t.Error("Expected error for nonexistent file")
-	}
-
-	// Test directory instead of file
-	coverageFile = "../../testdata" // This is a directory
-	err = validateFlags(cmd, []string{})
-	if err == nil {
-		t.Error("Expected error for directory instead of file")
-	}
-
 	// Test invalid below percentage
-	coverageFile = "../../testdata/sample.lcov"
 	belowPct = 150 // Invalid
-	err = validateFlags(cmd, []string{})
+	err := validateFlags(cmd, []string{})
 	if err == nil {
 		t.Error("Expected error for invalid below percentage")
 	}
