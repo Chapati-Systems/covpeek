@@ -11,13 +11,13 @@ SF:file.rs
 DA:1,1
 end_of_record
 `
-	
+
 	format, err := DetectFormat(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	if format != LCOVFormat {
 		t.Errorf("Expected LCOVFormat, got: %s", format)
 	}
@@ -27,13 +27,13 @@ func TestDetectFormat_GoCoverage(t *testing.T) {
 	input := `mode: set
 file.go:1.1,3.2 1 1
 `
-	
+
 	format, err := DetectFormat(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	if format != GoCoverFormat {
 		t.Errorf("Expected GoCoverFormat, got: %s", format)
 	}
@@ -43,13 +43,13 @@ func TestDetectFormat_Unknown(t *testing.T) {
 	input := `some random content
 that doesn't match any format
 `
-	
+
 	format, err := DetectFormat(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	if format != UnknownFormat {
 		t.Errorf("Expected UnknownFormat, got: %s", format)
 	}
@@ -57,13 +57,13 @@ that doesn't match any format
 
 func TestDetectFormat_Empty(t *testing.T) {
 	input := ``
-	
+
 	format, err := DetectFormat(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	if format != UnknownFormat {
 		t.Errorf("Expected UnknownFormat, got: %s", format)
 	}
@@ -75,9 +75,9 @@ func TestDetectFormatByExtension_LCOV(t *testing.T) {
 		"test.info",
 		"lcov.info",
 		"coverage/lcov.info",
-		"COVERAGE.LCOV",  // Test case insensitive
+		"COVERAGE.LCOV", // Test case insensitive
 	}
-	
+
 	for _, filename := range tests {
 		format := DetectFormatByExtension(filename)
 		if format != LCOVFormat {
@@ -90,9 +90,9 @@ func TestDetectFormatByExtension_Go(t *testing.T) {
 	tests := []string{
 		"coverage.out",
 		"test/coverage.out",
-		"COVERAGE.OUT",  // Test case insensitive
+		"COVERAGE.OUT", // Test case insensitive
 	}
-	
+
 	for _, filename := range tests {
 		format := DetectFormatByExtension(filename)
 		if format != GoCoverFormat {
@@ -108,7 +108,7 @@ func TestDetectFormatByExtension_Unknown(t *testing.T) {
 		"file.go",
 		"readme.md",
 	}
-	
+
 	for _, filename := range tests {
 		format := DetectFormatByExtension(filename)
 		if format != UnknownFormat {
@@ -124,9 +124,11 @@ func TestCoverageFormat_String(t *testing.T) {
 	}{
 		{LCOVFormat, "LCOV"},
 		{GoCoverFormat, "Go Coverage"},
+		{PyCoverXMLFormat, "Python XML Coverage"},
+		{PyCoverJSONFormat, "Python JSON Coverage"},
 		{UnknownFormat, "Unknown"},
 	}
-	
+
 	for _, test := range tests {
 		result := test.format.String()
 		if result != test.expected {
@@ -141,13 +143,13 @@ func TestDetectFormat_MixedMarkers(t *testing.T) {
 file.go:1.1,3.2 1 1
 some other content
 `
-	
+
 	format, err := DetectFormat(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	if format != GoCoverFormat {
 		t.Errorf("Expected GoCoverFormat, got: %s", format)
 	}
@@ -161,13 +163,13 @@ LH:1
 LF:1
 end_of_record
 `
-	
+
 	format, err := DetectFormat(strings.NewReader(input))
-	
+
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
-	
+
 	if format != LCOVFormat {
 		t.Errorf("Expected LCOVFormat, got: %s", format)
 	}

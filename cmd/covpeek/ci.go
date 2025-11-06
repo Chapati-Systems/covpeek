@@ -42,6 +42,8 @@ func runCI(cmd *cobra.Command, args []string) error {
 		"target/coverage/lcov.info",    // Rust
 		"coverage/lcov.info",           // TS
 		"coverage/coverage-final.json", // TS
+		"coverage.xml",                 // Python
+		"coverage.json",                // Python
 	}
 
 	var reports []*models.CoverageReport
@@ -115,6 +117,12 @@ func parseCoverageFile(filePath string) (*models.CoverageReport, error) {
 		report, err = p.Parse(bytes.NewReader(content))
 	case detector.GoCoverFormat:
 		p := parser.NewGoCoverParser()
+		report, err = p.Parse(bytes.NewReader(content))
+	case detector.PyCoverXMLFormat:
+		p := parser.NewPyCoverXMLParser()
+		report, err = p.Parse(bytes.NewReader(content))
+	case detector.PyCoverJSONFormat:
+		p := parser.NewPyCoverJSONParser()
 		report, err = p.Parse(bytes.NewReader(content))
 	default:
 		return nil, fmt.Errorf("unsupported format: %s", format)

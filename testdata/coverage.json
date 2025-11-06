@@ -1,0 +1,22 @@
+{
+  "files": {
+    "src/main.py": {
+      "executed_lines": [1, 2, 3],
+      "missing_lines": [4, 5],
+      "summary": {
+        "covered_lines": 3,
+        "num_statements": 5,
+        "percent_covered": 60.0
+      }
+    },
+    "src/utils.py": {
+      "executed_lines": [1, 2, 3, 4],
+      "missing_lines": [5, 6, 7],
+      "summary": {
+        "covered_lines": 4,
+        "num_statements": 7,
+        "percent_covered": 57.14
+      }
+    }
+  }
+}

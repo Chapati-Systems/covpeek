@@ -11,9 +11,10 @@ var rootCmd = &cobra.Command{
 	Use:   "covpeek --file <path> [flags]",
 	Short: "Cross-language Coverage Report CLI Parser",
 	Long: `covpeek is a CLI tool for parsing and analyzing coverage reports 
-from multiple languages including Rust, Go, TypeScript, and JavaScript.
+from multiple languages including Rust, Go, TypeScript, JavaScript, and Python.
 
-It supports LCOV format (.lcov, .info) and Go coverage format (.out).`,
+It supports LCOV format (.lcov, .info), Go coverage format (.out), 
+and Python coverage formats (.xml, .json).`,
 	Example: `  # Parse a coverage file and display table
   covpeek --file coverage.lcov
 

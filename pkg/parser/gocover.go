@@ -189,7 +189,7 @@ func (p *GoCoverParser) parseCoverageEntry(line string, report *models.CoverageR
 
 	// Update total lines count
 	file.TotalLines = len(file.Lines)
-	
+
 	// Count covered lines
 	coveredCount := 0
 	for _, lineCov := range file.Lines {

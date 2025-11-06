@@ -71,13 +71,16 @@ func validateFlags(cmd *cobra.Command, args []string) error {
 	// Validate format if specified
 	if forceFormat != "" {
 		validFormats := map[string]bool{
-			"rust": true,
-			"go":   true,
-			"ts":   true,
-			"lcov": true, // alias for rust/ts
+			"rust":   true,
+			"go":     true,
+			"ts":     true,
+			"lcov":   true, // alias for rust/ts
+			"python": true,
+			"pyxml":  true,
+			"pyjson": true,
 		}
 		if !validFormats[strings.ToLower(forceFormat)] {
-			return fmt.Errorf("invalid format '%s': must be one of: rust, go, ts", forceFormat)
+			return fmt.Errorf("invalid format '%s': must be one of: rust, go, ts, python, pyxml, pyjson", forceFormat)
 		}
 	}
 
@@ -132,8 +135,12 @@ func runParse(cmd *cobra.Command, args []string) error {
 			format = detector.LCOVFormat
 		case "go":
 			format = detector.GoCoverFormat
+		case "python", "pyxml":
+			format = detector.PyCoverXMLFormat
+		case "pyjson":
+			format = detector.PyCoverJSONFormat
 		default:
-			return fmt.Errorf("unknown format: %s (use 'rust', 'go', or 'ts')", forceFormat)
+			return fmt.Errorf("unknown format: %s (use 'rust', 'go', 'ts', 'python', 'pyxml', or 'pyjson')", forceFormat)
 		}
 		cmd.PrintErrf("Using forced format: %s\n", format)
 	} else {
@@ -169,6 +176,20 @@ func runParse(cmd *cobra.Command, args []string) error {
 		report, err = p.Parse(bytes.NewReader(content))
 		if err != nil {
 			return fmt.Errorf("failed to parse Go coverage file: %w", err)
+		}
+
+	case detector.PyCoverXMLFormat:
+		p := parser.NewPyCoverXMLParser()
+		report, err = p.Parse(bytes.NewReader(content))
+		if err != nil {
+			return fmt.Errorf("failed to parse Python XML coverage file: %w", err)
+		}
+
+	case detector.PyCoverJSONFormat:
+		p := parser.NewPyCoverJSONParser()
+		report, err = p.Parse(bytes.NewReader(content))
+		if err != nil {
+			return fmt.Errorf("failed to parse Python JSON coverage file: %w", err)
 		}
 
 	default:

@@ -16,6 +16,10 @@ const (
 	LCOVFormat
 	// GoCoverFormat indicates Go coverage format (.out)
 	GoCoverFormat
+	// PyCoverXMLFormat indicates Python coverage XML format (Cobertura-compatible)
+	PyCoverXMLFormat
+	// PyCoverJSONFormat indicates Python coverage JSON format
+	PyCoverJSONFormat
 )
 
 // String returns the string representation of the coverage format
@@ -25,6 +29,10 @@ func (f CoverageFormat) String() string {
 		return "LCOV"
 	case GoCoverFormat:
 		return "Go Coverage"
+	case PyCoverXMLFormat:
+		return "Python XML Coverage"
+	case PyCoverJSONFormat:
+		return "Python JSON Coverage"
 	default:
 		return "Unknown"
 	}
@@ -40,6 +48,8 @@ func DetectFormat(reader io.Reader) (CoverageFormat, error) {
 
 	hasLCOVMarkers := false
 	hasGoMarkers := false
+	hasXMLMarkers := false
+	hasJSONMarkers := false
 
 	for scanner.Scan() && lineCount < maxLinesToCheck {
 		line := strings.TrimSpace(scanner.Text())
@@ -61,6 +71,16 @@ func DetectFormat(reader io.Reader) (CoverageFormat, error) {
 					hasGoMarkers = true
 				}
 			}
+		}
+
+		// Check for XML coverage format markers
+		if strings.Contains(line, "<coverage") || strings.Contains(line, "<class filename=") {
+			hasXMLMarkers = true
+		}
+
+		// Check for JSON coverage format markers
+		if strings.Contains(line, `"files"`) || strings.Contains(line, `"executed_lines"`) {
+			hasJSONMarkers = true
 		}
 
 		// Check for LCOV format markers
@@ -85,6 +105,14 @@ func DetectFormat(reader io.Reader) (CoverageFormat, error) {
 		return GoCoverFormat, nil
 	}
 
+	if hasXMLMarkers {
+		return PyCoverXMLFormat, nil
+	}
+
+	if hasJSONMarkers {
+		return PyCoverJSONFormat, nil
+	}
+
 	if hasLCOVMarkers {
 		return LCOVFormat, nil
 	}
@@ -99,6 +127,16 @@ func DetectFormatByExtension(filename string) CoverageFormat {
 	// Go coverage files
 	if strings.HasSuffix(filename, ".out") {
 		return GoCoverFormat
+	}
+
+	// Python XML coverage files
+	if strings.HasSuffix(filename, ".xml") && strings.Contains(filename, "coverage") {
+		return PyCoverXMLFormat
+	}
+
+	// Python JSON coverage files
+	if strings.HasSuffix(filename, ".json") && strings.Contains(filename, "coverage") {
+		return PyCoverJSONFormat
 	}
 
 	// LCOV format files
