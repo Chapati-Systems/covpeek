@@ -705,7 +705,7 @@ func TestOutputTableFlushError(t *testing.T) {
 
 	err := outputTable(report)
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = oldStdout
 
 	if err != nil {
@@ -735,7 +735,7 @@ func TestOutputCSVWriteError(t *testing.T) {
 
 	err := outputCSV(report)
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = oldStdout
 
 	if err != nil {

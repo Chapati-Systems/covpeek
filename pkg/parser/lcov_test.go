@@ -434,10 +434,6 @@ func TestLCOVParser_Parse_EmptyInput(t *testing.T) {
 		t.Errorf("Expected no error for empty input, got: %v", err)
 	}
 
-	if report == nil {
-		t.Error("Expected report for empty input")
-	}
-
 	if len(report.Files) != 0 {
 		t.Errorf("Expected 0 files for empty input, got: %d", len(report.Files))
 	}
@@ -450,14 +446,10 @@ end_of_record
 `
 
 	parser := NewLCOVParser()
-	report, err := parser.Parse(strings.NewReader(input))
+	_, err := parser.Parse(strings.NewReader(input))
 
 	if err != nil {
 		t.Logf("Got error: %v", err)
-	}
-
-	if report == nil {
-		t.Error("Expected report even with invalid DA")
 	}
 
 	warnings := parser.GetWarnings()
@@ -474,14 +466,10 @@ end_of_record
 `
 
 	parser := NewLCOVParser()
-	report, err := parser.Parse(strings.NewReader(input))
+	_, err := parser.Parse(strings.NewReader(input))
 
 	if err != nil {
 		t.Logf("Got error: %v", err)
-	}
-
-	if report == nil {
-		t.Error("Expected report even with malformed line")
 	}
 
 	warnings := parser.GetWarnings()

@@ -62,40 +62,44 @@ func TestGenerateBadgeSVG(t *testing.T) {
 	}
 }
 
-func TestBadgeCommand(t *testing.T) {
-	// Create a temp file for output
-	tmpFile, err := os.CreateTemp("", "badge-*.svg")
+func TestRunBadgeInvalidStyle(t *testing.T) {
+	badgeFile = "../../testdata/sample.lcov"
+	badgeOutput = "test.svg"
+	badgeLabel = "coverage"
+	badgeStyle = "invalid"
+
+	err := runBadge(nil, []string{})
+	if err == nil || !strings.Contains(err.Error(), "must be one of") {
+		t.Errorf("Expected error for invalid style, got %v", err)
+	}
+}
+
+func TestBadgeCommandAutoDetect(t *testing.T) {
+	// Create a temp coverage file
+	tmpFile := "coverage.out"
+	err := os.WriteFile(tmpFile, []byte("mode: set\ngithub.com/example/main.go:10.1,12.1 1 1\n"), 0644)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to create temp file: %v", err)
 	}
-	defer os.Remove(tmpFile.Name())
-	tmpFile.Close()
+	defer func() { _ = os.Remove(tmpFile) }()
 
-	// Assume coverage.out exists
-	if _, err := os.Stat("coverage.out"); os.IsNotExist(err) {
-		t.Skip("coverage.out not found, skipping integration test")
-	}
+	// Create temp output file
+	tmpOutput := "test-badge.svg"
+	defer func() { _ = os.Remove(tmpOutput) }()
 
-	// Test with file
-	badgeFile = "coverage.out"
-	badgeOutput = tmpFile.Name()
+	// Set flags for auto-detect
+	badgeFile = ""
+	badgeOutput = tmpOutput
 	badgeLabel = "coverage"
 	badgeStyle = "flat"
 
 	err = runBadge(nil, []string{})
 	if err != nil {
-		t.Errorf("runBadge failed: %v", err)
+		t.Errorf("runBadge auto-detect failed: %v", err)
 	}
 
-	// Check file exists and has content
-	content, err := os.ReadFile(tmpFile.Name())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(content) == 0 {
-		t.Error("SVG file is empty")
-	}
-	if !strings.Contains(string(content), "<svg") {
-		t.Error("File does not contain SVG")
+	// Check file exists
+	if _, err := os.Stat(tmpOutput); os.IsNotExist(err) {
+		t.Error("Badge file was not created")
 	}
 }

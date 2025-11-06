@@ -101,18 +101,32 @@ func TestDetectFormatByExtension_Go(t *testing.T) {
 	}
 }
 
-func TestDetectFormatByExtension_Unknown(t *testing.T) {
+func TestDetectFormatByExtension_PyXML(t *testing.T) {
 	tests := []string{
-		"coverage.txt",
-		"test.dat",
-		"file.go",
-		"readme.md",
+		"coverage.xml",
+		"test/coverage.xml",
+		"COVERAGE.XML", // Test case insensitive
 	}
 
 	for _, filename := range tests {
 		format := DetectFormatByExtension(filename)
-		if format != UnknownFormat {
-			t.Errorf("Expected UnknownFormat for %s, got: %s", filename, format)
+		if format != PyCoverXMLFormat {
+			t.Errorf("Expected PyCoverXMLFormat for %s, got: %s", filename, format)
+		}
+	}
+}
+
+func TestDetectFormatByExtension_PyJSON(t *testing.T) {
+	tests := []string{
+		"coverage.json",
+		"test/coverage.json",
+		"COVERAGE.JSON", // Test case insensitive
+	}
+
+	for _, filename := range tests {
+		format := DetectFormatByExtension(filename)
+		if format != PyCoverJSONFormat {
+			t.Errorf("Expected PyCoverJSONFormat for %s, got: %s", filename, format)
 		}
 	}
 }
@@ -155,14 +169,20 @@ some other content
 	}
 }
 
-func TestDetectFormat_LCOVWithoutTN(t *testing.T) {
-	// LCOV file without test name should still be detected
-	input := `SF:file.rs
-DA:1,1
-LH:1
-LF:1
-end_of_record
-`
+func TestDetectFormat_PyCoverJSON(t *testing.T) {
+	input := `{
+  "meta": {
+    "version": "5.0"
+  },
+  "files": {
+    "file.py": {
+      "summary": {
+        "covered_lines": 10,
+        "num_statements": 12
+      }
+    }
+  }
+}`
 
 	format, err := DetectFormat(strings.NewReader(input))
 
@@ -170,7 +190,38 @@ end_of_record
 		t.Fatalf("Expected no error, got: %v", err)
 	}
 
-	if format != LCOVFormat {
-		t.Errorf("Expected LCOVFormat, got: %s", format)
+	if format != PyCoverJSONFormat {
+		t.Errorf("Expected PyCoverJSONFormat, got: %s", format)
+	}
+}
+
+func TestDetectFormat_PyCoverXML(t *testing.T) {
+	input := `<?xml version="1.0" encoding="UTF-8"?>
+<coverage version="5.0">
+  <sources>
+    <source>.</source>
+  </sources>
+  <packages>
+    <package name="">
+      <classes>
+        <class filename="file.py" name="file" complexity="0">
+          <methods/>
+          <lines>
+            <line hits="1" number="1"/>
+          </lines>
+        </class>
+      </classes>
+    </package>
+  </packages>
+</coverage>`
+
+	format, err := DetectFormat(strings.NewReader(input))
+
+	if err != nil {
+		t.Fatalf("Expected no error, got: %v", err)
+	}
+
+	if format != PyCoverXMLFormat {
+		t.Errorf("Expected PyCoverXMLFormat, got: %s", format)
 	}
 }

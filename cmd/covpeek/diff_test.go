@@ -353,7 +353,7 @@ func TestRunDiffAutoDetectNoFiles(t *testing.T) {
 	// Restore files after test
 	defer func() {
 		for orig, backup := range movedFiles {
-			os.Rename(backup, orig)
+			_ = os.Rename(backup, orig)
 		}
 	}()
 
@@ -392,7 +392,7 @@ func TestRunDiffAutoDetectMultipleFiles(t *testing.T) {
 	// Clean up created files
 	defer func() {
 		for _, file := range createdFiles {
-			os.Remove(file)
+			_ = os.Remove(file)
 		}
 	}()
 

@@ -44,6 +44,7 @@ jobs:
           git config --local user.name "Gitea Action"
           git add coverage-badge.svg
           git diff --staged --quiet || git commit -m "Update coverage badge"
+          git push
           
       - name: Lint
         run: |

@@ -25,8 +25,9 @@ calculate total coverage, and fail if below the minimum threshold.`,
 
 func init() {
 	ciCmd.Flags().Float64Var(&minCoverage, "min", 0, "Minimum coverage percentage required (0-100)")
-	ciCmd.MarkFlagRequired("min")
-	rootCmd.AddCommand(ciCmd)
+	if err := ciCmd.MarkFlagRequired("min"); err != nil {
+		panic(err)
+	}
 }
 
 func runCI(cmd *cobra.Command, args []string) error {
@@ -50,7 +51,7 @@ func runCI(cmd *cobra.Command, args []string) error {
 
 	if len(reports) == 0 {
 		fmt.Println("No coverage files detected in standard locations. Please specify manually.")
-		os.Exit(1)
+		return fmt.Errorf("no coverage files found")
 	}
 
 	// Merge reports
@@ -62,13 +63,11 @@ func runCI(cmd *cobra.Command, args []string) error {
 	// Check against threshold
 	if overallPct >= minCoverage {
 		fmt.Printf("Coverage check passed: %.2f%% >= %.0f%% threshold.\n", overallPct, minCoverage)
-		os.Exit(0)
+		return nil
 	} else {
 		fmt.Printf("Coverage check failed: %.2f%% < %.0f%% minimum required.\n", overallPct, minCoverage)
-		os.Exit(1)
+		return fmt.Errorf("coverage below threshold")
 	}
-
-	return nil
 }
 
 func detectExistingCoverageFiles() []string {
@@ -100,7 +99,7 @@ func parseCoverageFile(filePath string) (*models.CoverageReport, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	content, err := io.ReadAll(file)
 	if err != nil {

@@ -109,9 +109,10 @@ func generateBadgeSVG(label, value, color, style string) string {
 	rx := "3"
 	gradient := ""
 	overlay := ""
-	if style == "flat-square" {
+	switch style {
+	case "flat-square":
 		rx = "0"
-	} else if style == "plastic" {
+	case "plastic":
 		rx = "4"
 		gradient = fmt.Sprintf(`<linearGradient id="a" x2="0" y2="100%%">
     <stop offset="0" stop-color="#fff" stop-opacity=".7"/>

@@ -24,6 +24,9 @@ and Python coverage formats (.xml, .json).`,
   # Generate coverage badge
   covpeek badge --file coverage.lcov --output badge.svg
 
+  # Upload to Codecov
+  covpeek upload --to codecov --repo-token $CODECOV_TOKEN
+
   # Output as JSON
   covpeek --file coverage.out --output json
 

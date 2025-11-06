@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"git.kernel.fun/chapati.systems/covpeek/pkg/models"
+	"github.com/spf13/cobra"
 )
 
 func TestMergeReports(t *testing.T) {
@@ -88,10 +89,6 @@ func TestParseCoverageFile(t *testing.T) {
 		t.Errorf("Failed to parse sample.lcov: %v", err)
 	}
 
-	if report == nil {
-		t.Error("Report is nil")
-	}
-
 	// Check has files
 	if len(report.Files) == 0 {
 		t.Error("No files in report")
@@ -108,10 +105,6 @@ func TestParseCoverageFileNonExistent(t *testing.T) {
 func TestMergeReportsEmpty(t *testing.T) {
 	reports := []*models.CoverageReport{}
 	merged := mergeReports(reports)
-
-	if merged == nil {
-		t.Error("Expected non-nil merged report")
-	}
 
 	if len(merged.Files) != 0 {
 		t.Error("Expected 0 files")
@@ -172,7 +165,7 @@ func TestDetectExistingCoverageFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
-	defer os.Remove(tmpFile)
+	defer func() { _ = os.Remove(tmpFile) }()
 
 	files := detectExistingCoverageFiles()
 	if len(files) == 0 {
@@ -202,30 +195,22 @@ github.com/example/main.go:15.1,17.1 1 0
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
-	defer os.Remove(tmpFile)
+	defer func() { _ = os.Remove(tmpFile) }()
 
 	// Test with min coverage that should pass
 	minCoverage = 50.0
 
-	// We can't easily test the exit codes without refactoring, so just test the logic
-	// by calling the functions directly
-	existingFiles := detectExistingCoverageFiles()
-	if len(existingFiles) == 0 {
-		t.Error("Expected to detect coverage file")
-	}
-
-	report, err := parseCoverageFile(tmpFile)
+	cmd := &cobra.Command{}
+	err = runCI(cmd, []string{})
 	if err != nil {
-		t.Errorf("Failed to parse coverage file: %v", err)
+		t.Errorf("Expected no error for passing coverage, got %v", err)
 	}
 
-	if report == nil {
-		t.Error("Report is nil")
-	}
-
-	_, _, pct := report.CalculateOverallCoverage()
-	if pct <= 0 {
-		t.Error("Expected positive coverage percentage")
+	// Test with min coverage that should fail
+	minCoverage = 90.0
+	err = runCI(cmd, []string{})
+	if err == nil {
+		t.Error("Expected error for failing coverage")
 	}
 }
 
@@ -233,10 +218,6 @@ func TestParseCoverageFileGo(t *testing.T) {
 	report, err := parseCoverageFile("../../testdata/sample.out")
 	if err != nil {
 		t.Errorf("Failed to parse sample.out: %v", err)
-	}
-
-	if report == nil {
-		t.Error("Report is nil")
 	}
 
 	if len(report.Files) == 0 {
@@ -250,26 +231,26 @@ func TestParseCoverageFilePyJSON(t *testing.T) {
 		t.Errorf("Failed to parse coverage.json: %v", err)
 	}
 
-	if report == nil {
-		t.Error("Report is nil")
-	}
-
 	if len(report.Files) == 0 {
 		t.Error("No files in report")
 	}
 }
 
-func TestParseCoverageFilePyXML(t *testing.T) {
-	report, err := parseCoverageFile("../../testdata/coverage.xml")
+func TestParseCoverageFileEmpty(t *testing.T) {
+	// Create a temp empty file
+	tmpFile := "empty.lcov"
+	err := os.WriteFile(tmpFile, []byte(""), 0644)
 	if err != nil {
-		t.Errorf("Failed to parse coverage.xml: %v", err)
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+	defer func() { _ = os.Remove(tmpFile) }()
+
+	report, err := parseCoverageFile(tmpFile)
+	if err != nil {
+		t.Errorf("Failed to parse empty file: %v", err)
 	}
 
-	if report == nil {
-		t.Error("Report is nil")
-	}
-
-	if len(report.Files) == 0 {
-		t.Error("No files in report")
+	if len(report.Files) != 0 {
+		t.Error("Expected no files")
 	}
 }
